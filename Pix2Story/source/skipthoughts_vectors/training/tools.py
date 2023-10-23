@@ -39,7 +39,7 @@ def load_model(embed_map=None):
 
     # Load model options
     print ('Loading model options...')
-    with open('%s.pkl'%config.paths['skmodels'], 'rb') as f:
+    with open(f"{config.paths['skmodels']}.pkl", 'rb') as f:
         options = pkl.load(f)
 
     # Load parameters
@@ -58,7 +58,7 @@ def load_model(embed_map=None):
     f_w2v = theano.function([embedding, x_mask], ctxw2v, name='f_w2v')
 
     # Load word2vec, if applicable
-    if embed_map == None:
+    if embed_map is None:
         print ('Loading word2vec embeddings...')
         embed_map = load_googlenews_vectors(config.paths['v_expansion'])
 
@@ -68,12 +68,7 @@ def load_model(embed_map=None):
 
     # Store everything we need in a dictionary
     print ('Packing up...')
-    model = {}
-    model['options'] = options
-    model['table'] = table
-    model['f_w2v'] = f_w2v
-
-    return model
+    return {'options': options, 'table': table, 'f_w2v': f_w2v}
 
 def encode(model, text, use_norm=False, verbose=True, batch_size=128, use_eos=False):
     """
@@ -166,8 +161,9 @@ def load_googlenews_vectors(path_to_word2vec):
     """
     load the word2vec GoogleNews vectors
     """
-    embed_map = KeyedVectors.load_word2vec_format(config.paths['v_expansion'], binary=True)
-    return embed_map
+    return KeyedVectors.load_word2vec_format(
+        config.paths['v_expansion'], binary=True
+    )
 
 def lookup_table(options, embed_map, worddict, word_idict, f_emb, use_norm=False):
     """
@@ -225,7 +221,7 @@ def apply_regressor(clf, embed_map, use_norm=False):
     Map words from word2vec into RNN word space
     """
     wordvecs = OrderedDict()
-    for i, w in enumerate(embed_map.vocab.keys()):
+    for w in embed_map.vocab.keys():
         if '_' not in w:
             wordvecs[w] = clf.predict(embed_map[w].reshape(1,-1)).astype('float32')
             if use_norm:

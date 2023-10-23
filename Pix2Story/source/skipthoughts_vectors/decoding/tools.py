@@ -34,7 +34,7 @@ def load_model():
 
     # Load model options
     print ('Loading model options...')
-    with open('%s.pkl'%config.paths['skvmodels'], 'rb') as f:
+    with open(f"{config.paths['skvmodels']}.pkl", 'rb') as f:
         options = pkl.load(f)
 
     # Load parameters
@@ -67,9 +67,6 @@ def run_sampler(dec, c, beam_width=1, use_unk=False):
                'trng' : dec['trng'], 'k' : beam_width, 'maxlen' : 1000, 'argmax' : False,
                 'use_unk' : use_unk}
     sample, score = GenSample(**kwargs).gen_sample()
-    text = []
-    for c in sample:
-        text.append(' '.join([dec['word_idict'][w] for w in c[:-1]]))
-    return text
+    return [' '.join([dec['word_idict'][w] for w in c[:-1]]) for c in sample]
 
 

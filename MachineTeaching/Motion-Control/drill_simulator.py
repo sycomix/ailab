@@ -61,11 +61,10 @@ class DrillSimulator(Simulator):
 
         dirname = os.path.dirname(os.path.abspath(__file__))
         os.chdir(dirname)
-        filenames = [i for i in glob.glob('*.{}'.format('csv'))]
+        filenames = list(glob.glob('*.csv'))
 
         for filename in filenames:
-            print('Loading: ' + filename)
-             # resolve the relative paths    
+            print(f'Loading: {filename}')
             data_file_path = os.path.join(dirname, filename)
 
             with open(data_file_path) as csv_file:
@@ -73,8 +72,8 @@ class DrillSimulator(Simulator):
                 #read the csv file and dump it into an array
                 for row in csv_dict_reader:
                     self.rows.append(row)
-        
-        print("Finished loading CSV Data - Row Count: " + str(len(self.rows)))
+
+        print(f"Finished loading CSV Data - Row Count: {len(self.rows)}")
 
 def main():
     print("Drill Simulator Starting. . .")

@@ -25,9 +25,7 @@ def read_data(path,min_len=50):
 def join_small_sents(text_list,min_sent_size=200):
     new_text = []
     buffer_sent = ''
-    counter=0
-    for sent in text_list:
-        counter+=1
+    for counter, sent in enumerate(text_list, start=1):
         print(counter)
         if len((buffer_sent + sent).split(' ')) < min_sent_size:
             buffer_sent += sent

@@ -19,7 +19,7 @@ def load_model(path_to_model):
     Load all model components
     """
     # Load the worddict
-    with open('%s.dictionary.pkl'%path_to_model, 'rb') as f:
+    with open(f'{path_to_model}.dictionary.pkl', 'rb') as f:
         worddict = pkl.load(f)
 
     # Create inverted dictionary
@@ -30,7 +30,7 @@ def load_model(path_to_model):
     word_idict[1] = 'UNK'
 
     # Load model options
-    with open('%s.pkl'%path_to_model, 'rb') as f:
+    with open(f'{path_to_model}.pkl', 'rb') as f:
         options = pkl.load(f)
 
     # Load parameters
@@ -46,14 +46,13 @@ def load_model(path_to_model):
     trng, [im], images = build_image_encoder(tparams, options)
     f_ienc = theano.function([im], images, name='f_ienc')
 
-    # Store everything we need in a dictionary
-    model = {}
-    model['options'] = options
-    model['worddict'] = worddict
-    model['word_idict'] = word_idict
-    model['f_senc'] = f_senc
-    model['f_ienc'] = f_ienc
-    return model
+    return {
+        'options': options,
+        'worddict': worddict,
+        'word_idict': word_idict,
+        'f_senc': f_senc,
+        'f_ienc': f_ienc,
+    }
 
 def encode_sentences(model, text, verbose=False, batch_size=128):
     """
@@ -82,9 +81,16 @@ def same_length_encoding(ds,d,captions,model,batch_size,features):
         for minibatch in range(numbatches):
             caps = ds[k][minibatch::numbatches]
             caption = [captions[c] for c in caps]
-            seqs = []
-            for i, cc in enumerate(caption):
-                seqs.append([model['worddict'][w] if d[w] > 0 and model['worddict'][w] < model['options']['n_words'] else 1 for w in cc])
+            seqs = [
+                [
+                    model['worddict'][w]
+                    if d[w] > 0
+                    and model['worddict'][w] < model['options']['n_words']
+                    else 1
+                    for w in cc
+                ]
+                for cc in caption
+            ]
             x = numpy.zeros((k+1, len(caption))).astype('int64')
             x_mask = numpy.zeros((k+1, len(caption))).astype('float32')
             for idx, s in enumerate(seqs):
@@ -105,8 +111,7 @@ def encode_images(model, im):
     """
     Encode images into the joint embedding space
     """
-    images = model['f_ienc'](im)
-    return images
+    return model['f_ienc'](im)
 
 
 layers = {'ff': ('param_init_fflayer', 'fflayer'),

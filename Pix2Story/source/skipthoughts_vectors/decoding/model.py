@@ -18,7 +18,7 @@ def init_params(options, preemb=None):
     params = OrderedDict()
 
     # Word embedding
-    if preemb == None:
+    if preemb is None:
         params['Wemb'] = norm_weight(options['n_words'], options['dim_word'])
     else:
         params['Wemb'] = preemb

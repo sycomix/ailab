@@ -98,7 +98,7 @@ def prepare_data(caps, features, worddict, model, maxlen=None, n_words=10000):
         feat_list = new_feat_list
         seqs = new_seqs
 
-        if len(lengths) < 1:
+        if not lengths:
             return None, None, None
 
     # Compute skip-thought vectors for this mini-batch

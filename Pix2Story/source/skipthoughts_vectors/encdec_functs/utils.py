@@ -37,7 +37,7 @@ def pref(pp, name):
     """
     Make prefix-appended name
     """
-    return '%s_%s'%(pp, name)
+    return f'{pp}_{name}'
 
 def init_tparams(params, target=None):
     """
@@ -60,7 +60,7 @@ def load_params(path, params):
     pp = numpy.load(path, encoding='latin1')
     for kk, vv in params.items():
         if kk not in pp:
-            warnings.warn('%s is not in the archive'%kk)
+            warnings.warn(f'{kk} is not in the archive')
             continue
         params[kk] = pp[kk]
     return params
@@ -78,7 +78,7 @@ def norm_weight(nin,nout=None, scale=0.1, ortho=True):
     Uniform initalization from [-scale, scale]
     If matrix is square and ortho=True, use ortho instead
     """
-    if nout == None:
+    if nout is None:
         nout = nin
     if nout == nin and ortho:
         W = ortho_weight(nin)
@@ -98,7 +98,7 @@ def xavier_weight(nin,nout=None):
     """
     Xavier init
     """
-    if nout == None:
+    if nout is None:
         nout = nin
     r = numpy.sqrt(6.) / numpy.sqrt(nin + nout)
     W = numpy.random.rand(nin, nout) * 2 * r - r
@@ -139,10 +139,10 @@ def concatenate(tensor_list, axis=0):
     offset = 0
     for tt in tensor_list:
         indices = ()
-        for k in range(axis):
+        for _ in range(axis):
             indices += (slice(None),)
         indices += (slice(offset, offset + tt.shape[axis]),)
-        for k in range(axis + 1, tensor_list[0].ndim):
+        for _ in range(axis + 1, tensor_list[0].ndim):
             indices += (slice(None),)
 
         out = tensor.set_subtensor(out[indices], tt)
@@ -154,8 +154,8 @@ def reload_opts(model_options):
     saveto = model_options['saveto']
     reload_ = model_options['reload_']
     if reload_ and os.path.exists(saveto):
-        print ('reloading...' + saveto)
-        with open('%s.pkl'%saveto, 'rb') as f:
+        print(f'reloading...{saveto}')
+        with open(f'{saveto}.pkl', 'rb') as f:
             model_options = pkl.load(f)
     return model_options
 
@@ -197,11 +197,12 @@ def f_grad_clip(grad_clip,grads):
         g2 = 0.
         for g in grads:
             g2 += (g**2).sum()
-        new_grads = []
-        for g in grads:
-            new_grads.append(tensor.switch(g2 > (grad_clip**2),
-                                           g / tensor.sqrt(g2) * grad_clip,
-                                           g))
+        new_grads = [
+            tensor.switch(
+                g2 > (grad_clip**2), g / tensor.sqrt(g2) * grad_clip, g
+            )
+            for g in grads
+        ]
         grads = new_grads
     return grads
 
@@ -216,30 +217,27 @@ def check_save(uidx, save_freq, tparams, saveto, model_options):
         print ('Saving...')
         params = unzip(tparams)
         numpy.savez(saveto, history_errs=[], **params)
-        pkl.dump(model_options, open('%s.pkl'%saveto, 'wb'))
+        pkl.dump(model_options, open(f'{saveto}.pkl', 'wb'))
         print ('Done')
 
 
 def show_samples(list_xmc, trng, tparams, f_init, f_next, model_options, word_idict):  
-        x_s = list_xmc[0]
-        ctx_s = list_xmc[2]
-        for jj in range(numpy.minimum(10, len(ctx_s))):
-            kwargs = {'tparams' : tparams, 'f_init' : f_init, 'f_next' : f_next,
-              'ctx' : ctx_s[jj].reshape(1, model_options['dimctx']), 'options' : model_options,
-               'trng' : trng, 'k' : 1, 'maxlen' : model_options['maxlen_w'], 'argmax' : False,
-                'use_unk' : False}
-            sample, score = GenSample(**kwargs).gen_sample()
-            print ('Truth ',jj,': ',)
-            sent = ''
-            for vv in x_s[:,jj]:
-                if vv == 0:
-                    break
-                if vv in word_idict:
-                    sent += word_idict[vv] + ' '
-                else:
-                    sent += 'UNK' + ' '
-            print(sent)
-            print_samples(sample, jj, word_idict)
+    x_s = list_xmc[0]
+    ctx_s = list_xmc[2]
+    for jj in range(numpy.minimum(10, len(ctx_s))):
+        kwargs = {'tparams' : tparams, 'f_init' : f_init, 'f_next' : f_next,
+          'ctx' : ctx_s[jj].reshape(1, model_options['dimctx']), 'options' : model_options,
+           'trng' : trng, 'k' : 1, 'maxlen' : model_options['maxlen_w'], 'argmax' : False,
+            'use_unk' : False}
+        sample, score = GenSample(**kwargs).gen_sample()
+        print ('Truth ',jj,': ',)
+        sent = ''
+        for vv in x_s[:,jj]:
+            if vv == 0:
+                break
+            sent += f'{word_idict[vv]} ' if vv in word_idict else 'UNK' + ' '
+        print(sent)
+        print_samples(sample, jj, word_idict)
 
 
 def print_samples(sample, jj, word_idict):
@@ -249,8 +247,5 @@ def print_samples(sample, jj, word_idict):
         for vv in ss:
             if vv == 0:
                 break
-            if vv in word_idict:
-                sent += word_idict[vv] + ' '
-            else:
-                sent += 'UNK' + ' '
+            sent += f'{word_idict[vv]} ' if vv in word_idict else 'UNK' + ' '
         print(sent)

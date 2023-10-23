@@ -20,9 +20,9 @@ def param_init_fflayer(options, params, prefix='ff', nin=None, nout=None, ortho=
     """
     Affine transformation + point-wise nonlinearity
     """
-    if nin == None:
+    if nin is None:
         nin = options['dim_proj']
-    if nout == None:
+    if nout is None:
         nout = options['dim_proj']
     params[pref(prefix,'W')] = norm_weight(nin, nout, ortho=ortho)
     params[pref(prefix,'b')] = numpy.zeros((nout,)).astype('float32')
@@ -40,9 +40,9 @@ def param_init_gru(options, params, prefix='gru', nin=None, dim=None):
     """
     Gated Recurrent Unit (GRU)
     """
-    if nin == None:
+    if nin is None:
         nin = options['dim_proj']
-    if dim == None:
+    if dim is None:
         dim = options['dim_proj']
     w = numpy.concatenate([norm_weight(nin,dim),
                            norm_weight(nin,dim)], axis=1)
@@ -67,17 +67,13 @@ def gru_layer(tparams, state_below, init_state, options, prefix='gru', one_step=
     """
     mask = kwargs.pop('mask')
     nsteps = state_below.shape[0]
-    if state_below.ndim == 3:
-        n_samples = state_below.shape[1]
-    else:
-        n_samples = 1
-
+    n_samples = state_below.shape[1] if state_below.ndim == 3 else 1
     dim = tparams[pref(prefix,'Ux')].shape[1]
 
-    if init_state == None:
+    if init_state is None:
         init_state = tensor.alloc(0., n_samples, dim)
 
-    if mask == None:
+    if mask is None:
         mask = tensor.alloc(1., state_below.shape[0], 1)
 
     def _slice(_x, n, dim):

@@ -47,9 +47,9 @@ class StoryGenerator(object):
         svecs = skipthoughts.encode(self.models['stv'], sentences, verbose=False)
         # Style shifting
         shift = svecs.mean(0) - self.models['bneg'] + self.models['bpos']
-        # Generate story conditioned on shift
-        passage = decoder.run_sampler(self,image_data,image_loc,self.models['dec'], shift, beam_width=bw)
-        return passage
+        return decoder.run_sampler(
+            self, image_data, image_loc, self.models['dec'], shift, beam_width=bw
+        )
         
 
 def load_all():
@@ -90,9 +90,7 @@ def load_all():
     print ('Loading captions...')
     cap = []
     with open(config.paths['captions'], 'rb') as f:
-        for line in f:
-            cap.append(line.strip().decode("utf-8"))
-
+        cap.extend(line.strip().decode("utf-8") for line in f)
     # Caption embeddings
     print ('Embedding captions...')
     cvec = embedding.encode_sentences(vse, cap, verbose=False)
@@ -102,37 +100,34 @@ def load_all():
     bneg = numpy.load(config.paths['negbias'],encoding='latin1')
     bpos = numpy.load(config.paths['posbias'],encoding='latin1')
 
-    # Pack up
-    z = {}
-    z['stv'] = stv
-    z['dec'] = dec
-    z['vse'] = vse
-    z['net'] = net
-    z['cap'] = cap
-    z['cvec'] = cvec
-    z['bneg'] = bneg
-    z['bpos'] = bpos
-    
-    return z
+    return {
+        'stv': stv,
+        'dec': dec,
+        'vse': vse,
+        'net': net,
+        'cap': cap,
+        'cvec': cvec,
+        'bneg': bneg,
+        'bpos': bpos,
+    }
 
 def base64_image(base64str):
     base64img = base64str.encode('utf-8')
     r = base64.decodestring(base64img)
     numpy_buffer = numpy.frombuffer(r, dtype=numpy.uint8)
     img = cv2.imdecode(numpy_buffer, cv2.IMREAD_COLOR)
-    rgb_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    return rgb_img 
+    return cv2.cvtColor(img, cv2.COLOR_RGB2BGR) 
 
 def load_image(file_name=None,image64=None):
     """
     Load and preprocess an image
     """
     MEAN_VALUE = numpy.array([103.939, 116.779, 123.68]).reshape((3,1,1))
-    if file_name != None:
+    if file_name is None:
+        im = base64_image(image64)
+    else:
         image = Image.open(file_name)
         im = numpy.array(image)
-    else:
-        im = base64_image(image64)
     # Resize so smallest dim = 256, preserving aspect ratio
     if len(im.shape) == 2:
         im = im[:, :, numpy.newaxis]
@@ -143,10 +138,10 @@ def load_image(file_name=None,image64=None):
     else:
         im = skimage.transform.resize(im, (int(h*256/w), 256), preserve_range=True)
     # Central crop to 224x224
-    h, w, _ = im.shape   
+    h, w, _ = im.shape
     im = im[h//2-112:h//2+112, w//2-112:w//2+112]
     print(im.shape)
-    rawim = numpy.copy(im).astype('int') 
+    rawim = numpy.copy(im).astype('int')
     # Shuffle axes to c01
     im = numpy.swapaxes(numpy.swapaxes(im, 1, 2), 0, 1)
     # Convert to BGR
@@ -158,22 +153,22 @@ def compute_features(net, im):
     """
     Compute fc7 features for im
     """
-    if config.FLAG_CPU_MODE:
-        net.blobs['data'].reshape(* im.shape)
-        net.blobs['data'].data[...] = im
-        net.forward()
-        fc7 = net.blobs['fc7'].data
-    else:
-        fc7 = numpy.array(lasagne.layers.get_output(net['fc7'], im,
-                                                    deterministic=True).eval())
-    return fc7
+    if not config.FLAG_CPU_MODE:
+        return numpy.array(
+            lasagne.layers.get_output(
+                net['fc7'], im, deterministic=True
+            ).eval()
+        )
+    net.blobs['data'].reshape(* im.shape)
+    net.blobs['data'].data[...] = im
+    net.forward()
+    return net.blobs['fc7'].data
 
 def build_convnet(path_to_vgg):
     """
     Construct VGG-19 convnet
     """
-    net = {}
-    net['input'] = InputLayer((None, 3, 224, 224))
+    net = {'input': InputLayer((None, 3, 224, 224))}
     net['conv1_1'] = ConvLayer(net['input'], 64, 3, pad=1)
     net['conv1_2'] = ConvLayer(net['conv1_1'], 64, 3, pad=1)
     net['pool1'] = PoolLayer(net['conv1_2'], 2)
@@ -202,7 +197,7 @@ def build_convnet(path_to_vgg):
     print ('Loading parameters...')
     output_layer = net['prob']
     a=numpy.load(path_to_vgg,encoding='latin1')
-    lasagne.layers.set_all_param_values(output_layer,a.tolist()) 
+    lasagne.layers.set_all_param_values(output_layer,a.tolist())
     return net
 
 

@@ -17,18 +17,23 @@ def text_moderator(text):
 
     try:
         conn = http.client.HTTPSConnection('eastus.api.cognitive.microsoft.com')
-        conn.request("POST", "/contentmoderator/moderate/v1.0/ProcessText/Screen?%s" % params, text, headers)
+        conn.request(
+            "POST",
+            f"/contentmoderator/moderate/v1.0/ProcessText/Screen?{params}",
+            text,
+            headers,
+        )
         response = conn.getresponse()
         data = response.read()
         conn.close()
-        
+
     except Exception as e:
         print("[Errno {0}] {1}".format(e.errno, e.strerror))
 
     d = data.decode('utf-8')
     data = json.loads(d)
-    if 'Classification' in data:   
-        out = data['Classification']['ReviewRecommended']
-    else:
-        out = False
-    return out
+    return (
+        data['Classification']['ReviewRecommended']
+        if 'Classification' in data
+        else False
+    )

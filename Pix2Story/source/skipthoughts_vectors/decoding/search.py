@@ -30,7 +30,7 @@ class GenSample(object):
         hyp_states = []
         next_state = self.f_init(self.ctx)
         next_w = -1 * numpy.ones((1,)).astype('int64')
-        for ii in range(int(self.maxlen)):
+        for _ in range(int(self.maxlen)):
             inps = [next_w, next_state]
             ret = self.f_next(*inps)
             next_p, next_w, next_state = ret[0], ret[1], ret[2]
@@ -62,7 +62,7 @@ class GenSample(object):
             hyp_scores = numpy.array(hyp_scores)
             live_k = new_live_k
 
-            if new_live_k < 1:
+            if live_k < 1:
                 break
             if dead_k >= self.k:
                 break

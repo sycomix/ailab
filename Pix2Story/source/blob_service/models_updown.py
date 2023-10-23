@@ -6,11 +6,14 @@ from settings import keys
 
 
 def upload_model(model_name, path='models'):
-    filepath = '../' + path + '/' + model_name
+    filepath = f'../{path}/{model_name}'
     blob_service = BlobService(
         keys.TRAINED_MODELS_STORAGE['account_name'] , keys.TRAINED_MODELS_STORAGE['key'])
     blob_service.block_service.create_blob_from_path(
-        keys.TRAINED_MODELS_STORAGE['containername'], path + '/' + model_name, filepath)
+        keys.TRAINED_MODELS_STORAGE['containername'],
+        f'{path}/{model_name}',
+        filepath,
+    )
         
 
 def download_model(model_name,path='models'):
@@ -28,8 +31,8 @@ def list_blob_files(folder):
     blob_service = BlobService(
         keys.TRAINED_MODELS_STORAGE['account_name'], keys.TRAINED_MODELS_STORAGE['key'])
     generator = blob_service.block_service.list_blobs(
-        keys.TRAINED_MODELS_STORAGE['containername'], folder + '/', delimiter='/')
-    list_blob_names = []
-    for blob in generator:
-        list_blob_names.append(blob.name)
-    return list_blob_names
+        keys.TRAINED_MODELS_STORAGE['containername'],
+        f'{folder}/',
+        delimiter='/',
+    )
+    return [blob.name for blob in generator]

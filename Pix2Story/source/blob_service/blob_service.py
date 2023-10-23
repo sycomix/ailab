@@ -11,5 +11,5 @@ class BlobService():
         return BlobService.__instance
 
     def __init__(self, account_name, account_key):
-        if not 'block_service' in dir(self):
+        if 'block_service' not in dir(self):
             self.block_service = BlockBlobService(account_name,account_key)

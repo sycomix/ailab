@@ -27,9 +27,9 @@ def load_model(path_to_model,path_to_tables):
     """
     # Load model options
     print ('Loading model parameters...')
-    with open('%s.pkl'%path_to_model, 'rb') as f:
+    with open(f'{path_to_model}.pkl', 'rb') as f:
         options = pkl.load(f)
-    
+
     # Load parameters
     params = init_params(options)
     params = load_params(path_to_model, params)
@@ -46,12 +46,7 @@ def load_model(path_to_model,path_to_tables):
 
     # Store everything we need in a dictionary
     print ('Packing up...')
-    model = {}
-    model['options'] = options
-    model['table'] = table
-    model['f_w2v'] = f_w2v
-
-    return model
+    return {'options': options, 'table': table, 'f_w2v': f_w2v}
 
 
 def load_tables():
@@ -60,10 +55,8 @@ def load_tables():
     """
     words = []
     table = numpy.load(config.paths['sktables'] + 'table.npy',encoding='latin1')
-    f = open(config.paths['sktables'] + 'dictionary.txt', 'rb')
-    for line in f:
-        words.append(line.decode('utf-8').strip())
-    f.close()
+    with open(config.paths['sktables'] + 'dictionary.txt', 'rb') as f:
+        words.extend(line.decode('utf-8').strip() for line in f)
     table = OrderedDict(zip(words, table))
     return table 
 
@@ -135,9 +128,9 @@ def param_init_gru(options, params, prefix='gru', nin=None, dim=None):
     """
     parameter init for GRU
     """
-    if nin == None:
+    if nin is None:
         nin = options['dim_proj']
-    if dim == None:
+    if dim is None:
         dim = options['dim_proj']
     w = numpy.concatenate([norm_weight(nin,dim),
                            norm_weight(nin,dim)], axis=1)
@@ -161,14 +154,10 @@ def gru_layer(tparams, state_below, options, prefix='gru', mask=None, **kwargs):
     Forward pass through GRU layer
     """
     nsteps = state_below.shape[0]
-    if state_below.ndim == 3:
-        n_samples = state_below.shape[1]
-    else:
-        n_samples = 1
-
+    n_samples = state_below.shape[1] if state_below.ndim == 3 else 1
     dim = tparams[pref(prefix,'Ux')].shape[1]
 
-    if mask == None:
+    if mask is None:
         mask = tensor.alloc(1., state_below.shape[0], 1)
 
     def _slice(_x, n, dim):

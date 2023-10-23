@@ -29,7 +29,7 @@ def load_model(path_to_model, path_to_dictionary):
     word_idict[1] = 'UNK'
 
     # Load model options
-    with open('%s.pkl'%path_to_model, 'rb') as f:
+    with open(f'{path_to_model}.pkl', 'rb') as f:
         options = pkl.load(f)
     if 'doutput' not in options.keys():
         options['doutput'] = True
@@ -63,9 +63,7 @@ def run_sampler(st_gen, image_data, image_loc, dec, c, beam_width=1,  use_unk=Fa
               'trng' : dec['trng'], 'k' : beam_width, 'maxlen' : 1000, 'argmax' : False,
               'use_unk' : use_unk}
     sample, score = GenSample(**kwargs).gen_sample()
-    text = []
-    for c in sample:
-        text.append(' '.join([dec['word_idict'][w] for w in c[:-1]]))
+    text = [' '.join([dec['word_idict'][w] for w in c[:-1]]) for c in sample]
     #Sort beams by their NLL, return the best result
     lengths = numpy.array([len(s.split()) for s in text])
     if lengths[0] == 0:  # in case the model only predicts <eos>
@@ -76,11 +74,15 @@ def run_sampler(st_gen, image_data, image_loc, dec, c, beam_width=1,  use_unk=Fa
     passage = text[sidx]
     score = score[sidx]
     if text_moderator(passage.encode('utf-8')) or len(passage.split(' '))<15:
-        passage = ''
-        for t in text:
-            if not text_moderator(t.encode('utf-8')) and len(t.split(' '))>15:
-                    passage = t
-                    break    
+        passage = next(
+            (
+                t
+                for t in text
+                if not text_moderator(t.encode('utf-8'))
+                and len(t.split(' ')) > 15
+            ),
+            '',
+        )
     if passage == '':
         if beam_width < 50:
             passage = st_gen.story(image_data=image_data,image_loc = image_loc,bw=50)
@@ -119,11 +121,11 @@ def check_text(passage):
 
 def check_pun(passage):
     for i in reversed(range(len(passage))):
-        if passage[i] == '.' or passage[i] == "!" or passage[i] == '?':
+        if passage[i] in ['.', "!", '?']:
             break
         if passage[i].isalpha() or passage[i] == "'" or passage[i] == '"':
             passage.append('.')
-            break  
+            break
     passage = ''.join(passage)
     return passage
 

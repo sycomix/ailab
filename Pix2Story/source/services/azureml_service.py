@@ -49,8 +49,9 @@ class AzureMlService():
     def __create_or_get_compute(self):
         compute_config = self.__config['compute']
         compute_list = AksCompute.list(self.__ws)
-        compute = compute_list.find_by_property('name',compute_config['name'])
-        if compute:
+        if compute := compute_list.find_by_property(
+            'name', compute_config['name']
+        ):
             return compute
         prov_config = AksCompute.provisioning_configuration(agent_count=compute_config['agent_count'], 
             vm_size=compute_config['vm_size'], location=compute_config['location'])
@@ -67,8 +68,7 @@ class AzureMlService():
     def __deploy_service(self,image,compute):
         service_config = self.__config['deploy']
         services = AksWebservice.list(self.__ws)
-        service = services.find_by_property('name',service_config['name'])
-        if service:
+        if service := services.find_by_property('name', service_config['name']):
             service.update(auth_enabled=service_config['auth'])
             service.wait_for_deployment(show_output = True)
             return service

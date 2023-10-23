@@ -43,9 +43,9 @@ class CncSimulator(Simulator):
         print("Episode:" + self.rows[self.current_rowx]['episode'] + " " + "Iteration:" + iteration + " " +  "Step:" + str(self.step_count))
 
         # move the iteration pointer to the next row
-        if done != True:
+        if not done:
             self.current_rowx+=1
-        
+
         #reset step count if iteration is finished
         if(self.step_count >= self.ITERATION_LENGTH):
             self.step_count = 0
@@ -62,11 +62,10 @@ class CncSimulator(Simulator):
 
         dirname = os.path.dirname(os.path.abspath(__file__))
         os.chdir(dirname)
-        filenames = [i for i in glob.glob('*.{}'.format('csv'))]
+        filenames = list(glob.glob('*.csv'))
 
         for filename in filenames:
-            print('Loading: ' + filename)
-             # resolve the relative paths    
+            print(f'Loading: {filename}')
             data_file_path = os.path.join(dirname, filename)
 
             with open(data_file_path) as csv_file:
@@ -74,8 +73,8 @@ class CncSimulator(Simulator):
                 #read the csv file and dump it into an array
                 for row in csv_dict_reader:
                     self.rows.append(row)
-        
-        print("Finished loading CSV Data - Row Count: " + str(len(self.rows)))
+
+        print(f"Finished loading CSV Data - Row Count: {len(self.rows)}")
 
 def main():
     print("CNC Simulator Starting. . .")

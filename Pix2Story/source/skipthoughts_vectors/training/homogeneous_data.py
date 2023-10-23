@@ -78,7 +78,7 @@ def prepare_data(seqs_x, seqs_y, seqs_z, worddict, maxlen=None, n_words=20000):
     Put the data into format useable by the model
     """
     seqs_x, seqs_y, seqs_z = fill_seqs(seqs_x, seqs_y, seqs_z, worddict, n_words)
-    
+
     lengths_x = [len(s) for s in seqs_x]
     lengths_y = [len(s) for s in seqs_y]
     lengths_z = [len(s) for s in seqs_z]
@@ -105,7 +105,7 @@ def prepare_data(seqs_x, seqs_y, seqs_z, worddict, maxlen=None, n_words=20000):
         lengths_z = new_lengths_z
         seqs_z = new_seqs_z
 
-        if len(lengths_x) < 1 or len(lengths_y) < 1 or len(lengths_z) < 1:
+        if not lengths_x or not lengths_y or not lengths_z:
             return None, None, None, None, None, None
 
     n_samples = len(seqs_x)
@@ -136,21 +136,23 @@ def grouper(text):
     source = text[1:][:-1]
     forward = text[2:]
     backward = text[:-2]
-    X = (source, forward, backward)
-    return X
+    return source, forward, backward
 
 
 def fill_seqs(seqs_x, seqs_y, seqs_z, worddict, n_words):
 
-    seqsx = []
-    seqsy = []
-    seqsz = []
-    for cc in seqs_x:
-        seqsx.append([worddict[w] if worddict[w] < n_words else 1 for w in cc.split()])
-    for cc in seqs_y:
-        seqsy.append([worddict[w] if worddict[w] < n_words else 1 for w in cc.split()])
-    for cc in seqs_z:
-        seqsz.append([worddict[w] if worddict[w] < n_words else 1 for w in cc.split()])
+    seqsx = [
+        [worddict[w] if worddict[w] < n_words else 1 for w in cc.split()]
+        for cc in seqs_x
+    ]
+    seqsy = [
+        [worddict[w] if worddict[w] < n_words else 1 for w in cc.split()]
+        for cc in seqs_y
+    ]
+    seqsz = [
+        [worddict[w] if worddict[w] < n_words else 1 for w in cc.split()]
+        for cc in seqs_z
+    ]
     seqs_x = seqsx
     seqs_y = seqsy
     seqs_z = seqsz

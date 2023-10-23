@@ -17,8 +17,8 @@ class HvacSimulator(Simulator):
     rows = []
 
     def episode_start(self, parameters=None):
-        print("**Start Episode** " + str(self.episode_count))
-        
+        print(f"**Start Episode** {str(self.episode_count)}")
+
         if int(self.iteration_count) == 0:
             episode_state = {
                 'energy_cost' :self.ENERGY_COST,
@@ -36,9 +36,7 @@ class HvacSimulator(Simulator):
         if self.iteration_count%12 == 0:
             self.current_hour+=1
             #make sure can't go above 24 hours
-            if self.current_hour > 24:
-                self.current_hour = 24
-
+            self.current_hour = min(self.current_hour, 24)
         state = {
             'energy_cost':self.ENERGY_COST,
             'hour': self.current_hour,
@@ -52,7 +50,7 @@ class HvacSimulator(Simulator):
         #check when at the end of an iteration.
         done = (int(iteration)==self.ITERATION_LENGTH)
 
-        print("Episode:" + str(self.episode_count) + " " + "Iteration:" + str(iteration))
+        print(f"Episode:{str(self.episode_count)} Iteration:{str(iteration)}")
 
         # move the iteration pointer to the next row
         self.current_rowx+=1
@@ -72,11 +70,10 @@ class HvacSimulator(Simulator):
 
         dirname = os.path.dirname(os.path.abspath(__file__))
         os.chdir(dirname)
-        filenames = [i for i in glob.glob('*.{}'.format('csv'))]
+        filenames = list(glob.glob('*.csv'))
 
         for filename in filenames:
-            print('Loading: ' + filename)
-             # resolve the relative paths    
+            print(f'Loading: {filename}')
             data_file_path = os.path.join(dirname, filename)
 
             with open(data_file_path) as csv_file:
@@ -84,8 +81,8 @@ class HvacSimulator(Simulator):
                 #read the csv file and dump it into an array
                 for row in csv_dict_reader:
                     self.rows.append(row)
-        
-        print("Finished loading CSV Data - Row Count: " + str(len(self.rows)))
+
+        print(f"Finished loading CSV Data - Row Count: {len(self.rows)}")
 
 def main():
     print("HVAC Simulator Starting. . .")
